@@ -19,3 +19,10 @@ func TestParseEventsKeepsMultiWordExtra(t *testing.T) {
 		t.Fatalf("unexpected extra: %q", events[0].Extra)
 	}
 }
+
+func TestParseEventsRejectsInvalidNumericExtra(t *testing.T) {
+	_, err := ParseEvents(strings.NewReader(`[10:00:00] 1 11 heavy hit`))
+	if err == nil {
+		t.Fatalf("expected parse error")
+	}
+}
