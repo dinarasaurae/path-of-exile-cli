@@ -41,6 +41,15 @@ func ParseClock(value string) (time.Duration, error) {
 		time.Duration(seconds)*time.Second, nil
 }
 
+func FormatClock(value time.Duration) string {
+	total := int(value / time.Second)
+	hours := total / 3600
+	minutes := total % 3600 / 60
+	seconds := total % 60
+
+	return fmt.Sprintf("%02d:%02d:%02d", hours, minutes, seconds)
+}
+
 func parseClockPart(value string, name string) (int, error) {
 	if len(value) != 2 {
 		return 0, fmt.Errorf("%s must have two digits", name)
