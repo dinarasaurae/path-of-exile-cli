@@ -1,4 +1,4 @@
-package internal
+package dungeon
 
 import (
 	"encoding/json"

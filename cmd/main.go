@@ -6,7 +6,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/dinarasaurae/path-of-exile-cli/internal"
+	"github.com/dinarasaurae/path-of-exile-cli/internal/dungeon"
 )
 
 func run(args []string, stdout io.Writer, stderr io.Writer) (err error) {
@@ -28,7 +28,7 @@ func run(args []string, stdout io.Writer, stderr io.Writer) (err error) {
 		}
 	}()
 
-	settings, err := internal.LoadSettings(configFile)
+	settings, err := dungeon.LoadSettings(configFile)
 	if err != nil {
 		return fmt.Errorf("load config: %w", err)
 	}
