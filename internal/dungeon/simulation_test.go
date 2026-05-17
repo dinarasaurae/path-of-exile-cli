@@ -64,6 +64,39 @@ Final report:
 	}
 }
 
+func TestFloorClearTimeStopsAtLastMonster(t *testing.T) {
+	config := `{
+    "Floors": 2,
+    "Monsters": 1,
+    "OpenAt": "10:00:00",
+    "Duration": 1
+}`
+
+	events := `[10:00:00] 10 1
+[10:00:00] 10 2
+[10:00:10] 10 3
+[10:00:20] 10 4
+[10:00:20] 10 6
+[10:00:25] 10 7
+[10:00:30] 10 8`
+
+	expected := `[10:00:00] Player [10] registered
+[10:00:00] Player [10] entered the dungeon
+[10:00:10] Player [10] killed the monster
+[10:00:20] Player [10] went to the next floor
+[10:00:20] Player [10] entered the boss's floor
+[10:00:25] Player [10] killed the boss
+[10:00:30] Player [10] left the dungeon
+Final report:
+[SUCCESS] 10 [00:00:30, 00:00:10, 00:00:05] HP:100
+`
+
+	got := runScenario(t, config, events)
+	if got != expected {
+		t.Fatalf("unexpected output\nwant:\n%s\ngot:\n%s", expected, got)
+	}
+}
+
 func TestEnterBeforeOpenIsImpossible(t *testing.T) {
 	config := `{
     "Floors": 2,

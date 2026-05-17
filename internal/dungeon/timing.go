@@ -48,3 +48,13 @@ func (s *Simulator) clearCurrentFloor(player *playerState, at time.Duration) {
 func (s *Simulator) isOrdinaryFloor(floor int) bool {
 	return floor >= 1 && floor <= s.settings.OrdinaryCount
 }
+
+func (s *Simulator) allOrdinaryFloorsCleared(player *playerState) bool {
+	for index := range player.floors {
+		if !player.floors[index].cleared {
+			return false
+		}
+	}
+
+	return true
+}

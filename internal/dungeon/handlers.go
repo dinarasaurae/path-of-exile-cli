@@ -78,6 +78,35 @@ func (s *Simulator) movePrevious(player *playerState, event Event) {
 	s.log(event.At, fmt.Sprintf("Player [%d] went to the previous floor", player.id))
 }
 
+func (s *Simulator) enterBoss(player *playerState, event Event) {
+	if !player.entered || player.currentFloor != s.settings.Floors || player.onBossFloor || player.bossKilled {
+		s.impossible(player, event)
+		return
+	}
+
+	if !s.allOrdinaryFloorsCleared(player) {
+		s.impossible(player, event)
+		return
+	}
+
+	player.onBossFloor = true
+	player.bossActive = true
+	player.bossActiveStartedAt = event.At
+	s.log(event.At, fmt.Sprintf("Player [%d] entered the boss's floor", player.id))
+}
+
+func (s *Simulator) killBoss(player *playerState, event Event) {
+	if !player.entered || !player.onBossFloor || player.bossKilled {
+		s.impossible(player, event)
+		return
+	}
+
+	player.bossKillDuration = player.bossElapsed + event.At - player.bossActiveStartedAt
+	player.bossActive = false
+	player.bossKilled = true
+	s.log(event.At, fmt.Sprintf("Player [%d] killed the boss", player.id))
+}
+
 func (s *Simulator) disqualify(player *playerState, at time.Duration) {
 	s.log(at, fmt.Sprintf("Player [%d] is disqualified", player.id))
 	s.finish(player, StatusDisqual, at)
