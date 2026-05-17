@@ -3,7 +3,6 @@ package dungeon
 import "time"
 
 type EventID int
-type Status string
 
 const (
 	EventRegister      EventID = 1
@@ -17,6 +16,14 @@ const (
 	EventCannotProceed EventID = 9
 	EventRestoreHealth EventID = 10
 	EventReceiveDamage EventID = 11
+)
+
+type Status string
+
+const (
+	StatusSuccess Status = "SUCCESS"
+	StatusFail    Status = "FAIL"
+	StatusDisqual Status = "DISQUAL"
 )
 
 type Event struct {
