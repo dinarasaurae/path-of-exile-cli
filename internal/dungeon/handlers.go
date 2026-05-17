@@ -28,6 +28,26 @@ func (s *Simulator) enterDungeon(player *playerState, event Event) {
 	s.log(event.At, fmt.Sprintf("Player [%d] entered the dungeon", player.id))
 }
 
+func (s *Simulator) killMonster(player *playerState, event Event) {
+	if !player.entered || !s.isOrdinaryFloor(player.currentFloor) {
+		s.impossible(player, event)
+		return
+	}
+
+	floor := &player.floors[player.currentFloor-1]
+	if floor.cleared || floor.killed >= s.settings.Monsters {
+		s.impossible(player, event)
+		return
+	}
+
+	floor.killed++
+	if floor.killed == s.settings.Monsters {
+		s.clearCurrentFloor(player, event.At)
+	}
+
+	s.log(event.At, fmt.Sprintf("Player [%d] killed the monster", player.id))
+}
+
 func (s *Simulator) disqualify(player *playerState, at time.Duration) {
 	s.log(at, fmt.Sprintf("Player [%d] is disqualified", player.id))
 	s.finish(player, StatusDisqual, at)

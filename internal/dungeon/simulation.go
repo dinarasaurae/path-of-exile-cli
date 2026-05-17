@@ -87,7 +87,7 @@ func (s *Simulator) handle(event Event) error {
 	case EventEnterDungeon:
 		s.enterDungeon(player, event)
 	case EventKillMonster:
-		return nil
+		s.killMonster(player, event)
 	case EventNextFloor:
 		return nil
 	case EventPreviousFloor:

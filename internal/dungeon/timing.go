@@ -24,6 +24,13 @@ func (s *Simulator) activateCurrentFloor(player *playerState, at time.Duration) 
 	floor.activeStartedAt = at
 }
 
+func (s *Simulator) clearCurrentFloor(player *playerState, at time.Duration) {
+	floor := &player.floors[player.currentFloor-1]
+	floor.clearDuration = floor.elapsed + at - floor.activeStartedAt
+	floor.cleared = true
+	floor.active = false
+}
+
 func (s *Simulator) isOrdinaryFloor(floor int) bool {
 	return floor >= 1 && floor <= s.settings.OrdinaryCount
 }
