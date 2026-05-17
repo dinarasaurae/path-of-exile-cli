@@ -15,6 +15,19 @@ func (s *Simulator) register(player *playerState, event Event) {
 	s.log(event.At, fmt.Sprintf("Player [%d] registered", player.id))
 }
 
+func (s *Simulator) enterDungeon(player *playerState, event Event) {
+	if player.entered || event.At < s.settings.OpenAt || event.At > s.settings.CloseAt {
+		s.impossible(player, event)
+		return
+	}
+
+	player.entered = true
+	player.enteredAt = event.At
+	player.currentFloor = 1
+	s.activateCurrentFloor(player, event.At)
+	s.log(event.At, fmt.Sprintf("Player [%d] entered the dungeon", player.id))
+}
+
 func (s *Simulator) disqualify(player *playerState, at time.Duration) {
 	s.log(at, fmt.Sprintf("Player [%d] is disqualified", player.id))
 	s.finish(player, StatusDisqual, at)

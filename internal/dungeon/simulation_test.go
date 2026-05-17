@@ -28,6 +28,33 @@ Final report:
 	}
 }
 
+func TestEnterBeforeOpenIsImpossible(t *testing.T) {
+	config := `{
+    "Floors": 2,
+    "Monsters": 1,
+    "OpenAt": "10:00:00",
+    "Duration": 1
+}`
+
+	events := `[09:59:59] 9 1
+[09:59:59] 9 2
+[10:00:00] 9 2
+[10:00:01] 9 8`
+
+	expected := `[09:59:59] Player [9] registered
+[09:59:59] Player [9] makes imposible move [2]
+[10:00:00] Player [9] entered the dungeon
+[10:00:01] Player [9] left the dungeon
+Final report:
+[FAIL] 9 [00:00:01, 00:00:00, 00:00:00] HP:100
+`
+
+	got := runScenario(t, config, events)
+	if got != expected {
+		t.Fatalf("unexpected output\nwant:\n%s\ngot:\n%s", expected, got)
+	}
+}
+
 func TestEventsMustBeSorted(t *testing.T) {
 	settings, err := NewSettings(Config{
 		Floors:   2,

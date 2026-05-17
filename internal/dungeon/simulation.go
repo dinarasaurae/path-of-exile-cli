@@ -85,7 +85,7 @@ func (s *Simulator) handle(event Event) error {
 
 	switch event.ID {
 	case EventEnterDungeon:
-		return nil
+		s.enterDungeon(player, event)
 	case EventKillMonster:
 		return nil
 	case EventNextFloor:
