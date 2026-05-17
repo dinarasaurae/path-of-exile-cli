@@ -48,6 +48,36 @@ func (s *Simulator) killMonster(player *playerState, event Event) {
 	s.log(event.At, fmt.Sprintf("Player [%d] killed the monster", player.id))
 }
 
+func (s *Simulator) moveNext(player *playerState, event Event) {
+	if !player.entered || player.currentFloor <= 0 || player.currentFloor >= s.settings.Floors {
+		s.impossible(player, event)
+		return
+	}
+
+	if s.isOrdinaryFloor(player.currentFloor) && !player.floors[player.currentFloor-1].cleared {
+		s.impossible(player, event)
+		return
+	}
+
+	player.currentFloor++
+	player.onBossFloor = false
+	s.activateCurrentFloor(player, event.At)
+	s.log(event.At, fmt.Sprintf("Player [%d] went to the next floor", player.id))
+}
+
+func (s *Simulator) movePrevious(player *playerState, event Event) {
+	if !player.entered || player.currentFloor <= 1 {
+		s.impossible(player, event)
+		return
+	}
+
+	s.pauseCurrentFloor(player, event.At)
+	player.currentFloor--
+	player.onBossFloor = false
+	s.activateCurrentFloor(player, event.At)
+	s.log(event.At, fmt.Sprintf("Player [%d] went to the previous floor", player.id))
+}
+
 func (s *Simulator) disqualify(player *playerState, at time.Duration) {
 	s.log(at, fmt.Sprintf("Player [%d] is disqualified", player.id))
 	s.finish(player, StatusDisqual, at)
