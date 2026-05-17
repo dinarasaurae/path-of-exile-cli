@@ -31,6 +31,10 @@ func (s *Simulator) pauseCurrentFloor(player *playerState, at time.Duration) {
 		return
 	}
 
+	if !s.isOrdinaryFloor(player.currentFloor) {
+		return
+	}
+
 	floor := &player.floors[player.currentFloor-1]
 	if floor.active && !floor.cleared {
 		floor.elapsed += at - floor.activeStartedAt

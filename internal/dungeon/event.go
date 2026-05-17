@@ -18,6 +18,13 @@ const (
 	EventReceiveDamage EventID = 11
 )
 
+type Event struct {
+	At       time.Duration
+	PlayerID int
+	ID       EventID
+	Extra    string
+}
+
 type Status string
 
 const (
@@ -26,11 +33,9 @@ const (
 	StatusDisqual Status = "DISQUAL"
 )
 
-type Event struct {
-	At       time.Duration
-	PlayerID int
-	ID       EventID
-	Extra    string
+type LogEntry struct {
+	At      time.Duration
+	Message string
 }
 
 type Report struct {
@@ -45,8 +50,4 @@ type Report struct {
 type Result struct {
 	Logs    []LogEntry
 	Reports []Report
-}
-type LogEntry struct {
-	At      time.Duration
-	Message string
 }

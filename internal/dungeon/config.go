@@ -44,9 +44,16 @@ func NewSettings(config Config) (Settings, error) {
 		return Settings{}, fmt.Errorf("duration must be positive")
 	}
 
+	openAt, err := ParseClock(config.OpenAt)
+	if err != nil {
+		return Settings{}, fmt.Errorf("open time: %w", err)
+	}
+
 	return Settings{
 		Floors:        config.Floors,
 		Monsters:      config.Monsters,
+		OpenAt:        openAt,
+		CloseAt:       openAt + time.Duration(config.Duration)*time.Hour,
 		OrdinaryCount: config.Floors - 1,
 	}, nil
 }

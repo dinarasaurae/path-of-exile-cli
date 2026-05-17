@@ -76,10 +76,12 @@ func (s *Simulator) handle(event Event) error {
 	}
 
 	if event.ID == EventRegister {
+		s.register(player, event)
 		return nil
 	}
 
 	if !player.registered {
+		s.disqualify(player, event.At)
 		return nil
 	}
 
@@ -97,13 +99,13 @@ func (s *Simulator) handle(event Event) error {
 	case EventKillBoss:
 		s.killBoss(player, event)
 	case EventLeaveDungeon:
-		return nil
+		s.leaveDungeon(player, event)
 	case EventCannotProceed:
-		return nil
+		s.cannotProceed(player, event)
 	case EventRestoreHealth:
-		return nil
+		return s.restoreHealth(player, event)
 	case EventReceiveDamage:
-		return nil
+		return s.receiveDamage(player, event)
 	default:
 		s.impossible(player, event)
 	}

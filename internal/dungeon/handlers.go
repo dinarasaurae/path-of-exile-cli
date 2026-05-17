@@ -2,6 +2,7 @@ package dungeon
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 )
 
@@ -107,6 +108,69 @@ func (s *Simulator) killBoss(player *playerState, event Event) {
 	s.log(event.At, fmt.Sprintf("Player [%d] killed the boss", player.id))
 }
 
+func (s *Simulator) leaveDungeon(player *playerState, event Event) {
+	if !player.entered {
+		s.impossible(player, event)
+		return
+	}
+
+	s.pauseCurrentFloor(player, event.At)
+	s.log(event.At, fmt.Sprintf("Player [%d] left the dungeon", player.id))
+	s.finish(player, player.finalStatus(), event.At)
+}
+
+func (s *Simulator) cannotProceed(player *playerState, event Event) {
+	if event.Extra == "" {
+		s.impossible(player, event)
+		return
+	}
+
+	s.pauseCurrentFloor(player, event.At)
+	s.log(event.At, fmt.Sprintf("Player [%d] cannot continue due to [%s]", player.id, event.Extra))
+	s.finish(player, StatusDisqual, event.At)
+}
+
+func (s *Simulator) restoreHealth(player *playerState, event Event) error {
+	if !player.entered {
+		s.impossible(player, event)
+		return nil
+	}
+
+	health, err := strconv.Atoi(event.Extra)
+	if err != nil {
+		return fmt.Errorf("invalid health for player %d", player.id)
+	}
+
+	player.hp = min(player.hp+health, 100)
+
+	s.log(event.At, fmt.Sprintf("Player [%d] has restored [%d] of health", player.id, health))
+	return nil
+}
+
+func (s *Simulator) receiveDamage(player *playerState, event Event) error {
+	if !player.entered {
+		s.impossible(player, event)
+		return nil
+	}
+
+	damage, err := strconv.Atoi(event.Extra)
+	if err != nil {
+		return fmt.Errorf("invalid damage for player %d", player.id)
+	}
+
+	player.hp = max(player.hp-damage, 0)
+
+	s.log(event.At, fmt.Sprintf("Player [%d] recieved [%d] of damage", player.id, damage))
+
+	if player.hp == 0 {
+		s.pauseCurrentFloor(player, event.At)
+		s.log(event.At, fmt.Sprintf("Player [%d] is dead", player.id))
+		s.finish(player, StatusFail, event.At)
+	}
+
+	return nil
+}
+
 func (s *Simulator) disqualify(player *playerState, at time.Duration) {
 	s.log(at, fmt.Sprintf("Player [%d] is disqualified", player.id))
 	s.finish(player, StatusDisqual, at)
@@ -126,4 +190,17 @@ func (s *Simulator) finish(player *playerState, status Status, at time.Duration)
 	player.finished = true
 }
 
-func (s *Simulator) expirePlayers(at time.Duration) {}
+func (s *Simulator) expirePlayers(at time.Duration) {
+	if at <= s.settings.CloseAt {
+		return
+	}
+
+	for _, player := range s.players {
+		if !player.entered || player.finished {
+			continue
+		}
+
+		s.pauseCurrentFloor(player, s.settings.CloseAt)
+		s.finish(player, player.finalStatus(), s.settings.CloseAt)
+	}
+}

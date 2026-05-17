@@ -2,10 +2,48 @@ package dungeon
 
 import (
 	"errors"
+	"os"
 	"strings"
 	"testing"
 	"time"
 )
+
+func TestReadmeExample(t *testing.T) {
+	config := `{
+    "Floors": 2,
+    "Monsters": 2,
+    "OpenAt": "14:05:00",
+    "Duration": 2
+}`
+
+	events := `[14:00:00] 1 1
+[14:00:00] 2 1
+[14:10:00] 2 2
+[14:10:00] 3 2
+[14:11:00] 2 5
+[14:12:00] 3 3
+[14:14:00] 2 3
+[14:27:00] 2 11 60
+[14:29:00] 2 11 50
+[14:40:00] 1 2
+[14:41:00] 1 3
+[14:44:00] 1 11 50
+[14:45:00] 1 3
+[14:48:00] 1 4
+[14:48:00] 1 6
+[14:49:00] 1 11 25
+[14:49:02] 1 10 80
+[14:50:00] 1 11 65
+[14:59:00] 1 7
+[15:04:00] 1 8`
+
+	expected := readGolden(t, "testdata/output.golden")
+
+	got := runScenario(t, config, events)
+	if got != expected {
+		t.Fatalf("unexpected output\nwant:\n%s\ngot:\n%s", expected, got)
+	}
+}
 
 func TestImpossibleMoveDoesNotChangeState(t *testing.T) {
 	config := `{
@@ -43,6 +81,7 @@ Final report:
 		t.Fatalf("unexpected output\nwant:\n%s\ngot:\n%s", expected, got)
 	}
 }
+
 func TestUnregisteredPlayerIsDisqualified(t *testing.T) {
 	config := `{
     "Floors": 2,
@@ -89,6 +128,104 @@ func TestFloorClearTimeStopsAtLastMonster(t *testing.T) {
 [10:00:30] Player [10] left the dungeon
 Final report:
 [SUCCESS] 10 [00:00:30, 00:00:10, 00:00:05] HP:100
+`
+
+	got := runScenario(t, config, events)
+	if got != expected {
+		t.Fatalf("unexpected output\nwant:\n%s\ngot:\n%s", expected, got)
+	}
+}
+
+func TestDamageCanKillPlayer(t *testing.T) {
+	config := `{
+    "Floors": 2,
+    "Monsters": 1,
+    "OpenAt": "10:00:00",
+    "Duration": 1
+}`
+
+	events := `[10:00:00] 6 1
+[10:00:00] 6 2
+[10:00:01] 6 11 150
+[10:00:02] 6 3`
+
+	expected := `[10:00:00] Player [6] registered
+[10:00:00] Player [6] entered the dungeon
+[10:00:01] Player [6] recieved [150] of damage
+[10:00:01] Player [6] is dead
+Final report:
+[FAIL] 6 [00:00:01, 00:00:00, 00:00:00] HP:0
+`
+
+	got := runScenario(t, config, events)
+	if got != expected {
+		t.Fatalf("unexpected output\nwant:\n%s\ngot:\n%s", expected, got)
+	}
+}
+
+func TestCannotProceedKeepsMultiWordReason(t *testing.T) {
+	config := `{
+    "Floors": 2,
+    "Monsters": 1,
+    "OpenAt": "10:00:00",
+    "Duration": 1
+}`
+
+	events := `[10:00:00] 4 1
+[10:00:01] 4 2
+[10:00:02] 4 9 connection lost near exit`
+
+	expected := `[10:00:00] Player [4] registered
+[10:00:01] Player [4] entered the dungeon
+[10:00:02] Player [4] cannot continue due to [connection lost near exit]
+Final report:
+[DISQUAL] 4 [00:00:01, 00:00:00, 00:00:00] HP:100
+`
+
+	got := runScenario(t, config, events)
+	if got != expected {
+		t.Fatalf("unexpected output\nwant:\n%s\ngot:\n%s", expected, got)
+	}
+}
+
+func TestDungeonClosesActivePlayer(t *testing.T) {
+	config := `{
+    "Floors": 2,
+    "Monsters": 1,
+    "OpenAt": "10:00:00",
+    "Duration": 1
+}`
+
+	events := `[10:00:00] 5 1
+[10:00:01] 5 2
+[10:00:02] 5 3`
+
+	expected := `[10:00:00] Player [5] registered
+[10:00:01] Player [5] entered the dungeon
+[10:00:02] Player [5] killed the monster
+Final report:
+[FAIL] 5 [00:59:59, 00:00:01, 00:00:00] HP:100
+`
+
+	got := runScenario(t, config, events)
+	if got != expected {
+		t.Fatalf("unexpected output\nwant:\n%s\ngot:\n%s", expected, got)
+	}
+}
+
+func TestRegisteredPlayerWithoutDungeonEntryFails(t *testing.T) {
+	config := `{
+    "Floors": 2,
+    "Monsters": 1,
+    "OpenAt": "10:00:00",
+    "Duration": 1
+}`
+
+	events := `[10:00:00] 8 1`
+
+	expected := `[10:00:00] Player [8] registered
+Final report:
+[FAIL] 8 [00:00:00, 00:00:00, 00:00:00] HP:100
 `
 
 	got := runScenario(t, config, events)
@@ -176,4 +313,15 @@ func mustClock(t *testing.T, value string) time.Duration {
 	}
 
 	return parsed
+}
+
+func readGolden(t *testing.T, path string) string {
+	t.Helper()
+
+	content, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read golden: %v", err)
+	}
+
+	return string(content)
 }
